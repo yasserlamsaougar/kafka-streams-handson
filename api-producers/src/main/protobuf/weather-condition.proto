@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package com.myapp.weather;
+
+// Represents the weather response which contains location and current weather details.
+message WeatherCondition {
+    Location location = 1;  // Location details.
+    Current current = 2;    // Current weather details.
+}
+
+// Represents location information.
+message Location {
+    string name = 1;         // Name of the location (e.g., city name).
+    string region = 2;       // Region of the location.
+    string country = 3;      // Country of the location.
+    double lat = 4;          // Latitude of the location.
+    double lon = 5;          // Longitude of the location.
+    string tz_id = 6;        // Time zone identifier.
+    int64 localtime_epoch = 7; // Local time in epoch format.
+    string localtime = 8;    // Local time as a string.
+}
+
+// Represents the current weather details.
+message Current {
+    int64 last_updated_epoch = 1;  // Last updated time in epoch format.
+    string last_updated = 2;       // Last updated time as a string.
+    double temp_c = 3;             // Temperature in Celsius.
+    double temp_f = 4;             // Temperature in Fahrenheit.
+    int32 is_day = 5;              // Indicates if it is day or night (1 for day, 0 for night).
+    Condition condition = 6;       // Weather condition details.
+    double wind_mph = 7;           // Wind speed in miles per hour.
+    double wind_kph = 8;           // Wind speed in kilometers per hour.
+    int32 wind_degree = 9;         // Wind direction in degrees.
+    string wind_dir = 10;          // Wind direction as a string (e.g., N, NE, etc.).
+    double pressure_mb = 11;       // Atmospheric pressure in millibars.
+    double pressure_in = 12;       // Atmospheric pressure in inches.
+    double precip_mm = 13;         // Precipitation in millimeters.
+    double precip_in = 14;         // Precipitation in inches.
+    int32 humidity = 15;           // Humidity percentage.
+    int32 cloud = 16;              // Cloud coverage percentage.
+    double feelslike_c = 17;       // Feels like temperature in Celsius.
+    double feelslike_f = 18;       // Feels like temperature in Fahrenheit.
+    double windchill_c = 19;       // Wind chill temperature in Celsius.
+    double windchill_f = 20;       // Wind chill temperature in Fahrenheit.
+    double heatindex_c = 21;       // Heat index in Celsius.
+    double heatindex_f = 22;       // Heat index in Fahrenheit.
+    double dewpoint_c = 23;        // Dew point in Celsius.
+    double dewpoint_f = 24;        // Dew point in Fahrenheit.
+    double vis_km = 25;            // Visibility in kilometers.
+    double vis_miles = 26;         // Visibility in miles.
+    double uv = 27;                // UV index.
+    double gust_mph = 28;          // Wind gust speed in miles per hour.
+    double gust_kph = 29;          // Wind gust speed in kilometers per hour.
+    AirQuality air_quality = 30;   // Air quality details.
+}
+
+// Represents the condition of the weather.
+message Condition {
+    string text = 1;               // Description of the weather condition (e.g., "Clear").
+    string icon = 2;               // Icon representing the condition.
+    int32 code = 3;                // Condition code.
+}
+
+// Represents air quality information.
+message AirQuality {
+    double co = 1;                 // Carbon monoxide level.
+    double no2 = 2;                // Nitrogen dioxide level.
+    double o3 = 3;                 // Ozone level.
+    double so2 = 4;                // Sulfur dioxide level.
+    double pm2_5 = 5;              // Particulate matter < 2.5 µm level.
+    double pm10 = 6;               // Particulate matter < 10 µm level.
+    int32 us_epa_index = 7;        // US EPA Air Quality Index.
+    int32 gb_defra_index = 8;      // UK Defra Air Quality Index.
+}

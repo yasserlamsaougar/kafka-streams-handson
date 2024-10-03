@@ -1,19 +1,19 @@
-package com.myapp
+package com.myapp.kafka
 
 import com.myapp.InputEventOuterClass.InputEvent
-
-import java.util.Properties
 import com.typesafe.config.{Config, ConfigFactory}
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializerConfig
 import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde
-import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
+import org.apache.kafka.common.serialization.{Serde, Serdes}
+import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala._
 import org.apache.kafka.streams.scala.kstream._
-import org.apache.kafka.streams.scala.ImplicitConversions._
+import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 
+import java.util.Properties
 import scala.jdk.CollectionConverters._
 
-object Main extends App {
+object KafkaDeviceMetricsApp extends App {
 
   // Load configuration
   val config: Config = ConfigFactory.load()
@@ -40,10 +40,10 @@ object Main extends App {
 
   // Initialize Schema Registry SerDe
   implicit val protobufSerde: KafkaProtobufSerde[InputEvent] = new KafkaProtobufSerde[InputEvent]()
-  implicit val stringSerde = Serdes.String()
+  implicit val stringSerde: Serde[String] = Serdes.String()
 
   // Configure SerDe with Schema Registry URL
-  protobufSerde.configure(Map("schema.registry.url" -> schemaRegistryUrl).asJava, false)
+  protobufSerde.configure(Map("schema.registry.url" -> schemaRegistryUrl, KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE -> classOf[InputEvent].getName).asJava, false)
 
   // Create the StreamsBuilder
   val builder: StreamsBuilder = new StreamsBuilder()

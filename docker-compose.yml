@@ -1,63 +1,169 @@
+version: '3.8'
+
 services:
-  kafka:
+  kafka1:
     image: confluentinc/cp-kafka:7.7.1
-    container_name: kafka
+    container_name: kafka1
     ports:
-      - "9092:9092"
-      - "9093:9093"
-      - "9094:9094"  # New port for CONTROLLER listener
+      - "19092:19092"  # Exposed for client connections to kafka1
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://kafka:9093
-      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://kafka:9093,CONTROLLER://kafka:9094
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094"
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_NODE_ID: 1
-      CLUSTER_ID: "cluster-1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://0.0.0.0:19092,CONTROLLER://kafka1:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:19092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka1:9093,2@kafka2:9093,3@kafka3:9093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_LOG_DIRS: /var/lib/kafka/data
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: cluster-1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     volumes:
-      - ./data/kafka:/var/lib/kafka/data
+      - ./data/kafka1:/var/lib/kafka/data
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: kafka2
+    ports:
+      - "29092:19092"  # Exposed for client connections to kafka2
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://kafka2:9092,PLAINTEXT_HOST://0.0.0.0:19092,CONTROLLER://kafka2:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka1:9093,2@kafka2:9093,3@kafka3:9093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: cluster-1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+    volumes:
+      - ./data/kafka2:/var/lib/kafka/data
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: kafka3
+    ports:
+      - "39092:19092"  # Exposed for client connections to kafka3
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://kafka3:9092,PLAINTEXT_HOST://0.0.0.0:19092,CONTROLLER://kafka3:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092,PLAINTEXT_HOST://localhost:39092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka1:9093,2@kafka2:9093,3@kafka3:9093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: cluster-1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+    volumes:
+      - ./data/kafka3:/var/lib/kafka/data
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.7.1
     container_name: schema-registry
     depends_on:
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
     ports:
       - "8081:8081"
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
-      SCHEMA_REGISTRY_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8081
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:9092,PLAINTEXT://kafka2:9092,PLAINTEXT://kafka3:9092
       SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: FULL
-      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
-      SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 1
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 3
 
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.7.1
+    container_name: kafka-connect
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - schema-registry
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:9092,PLAINTEXT://kafka2:9092,PLAINTEXT://kafka3:9092
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_GROUP_ID: "1"
+      CONNECT_CONFIG_STORAGE_TOPIC: "connect-configs"
+      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_KEY_CONVERTER: "io.confluent.connect.protobuf.ProtobufConverter"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.protobuf.ProtobufConverter"
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+    volumes:
+      - ./plugins:/usr/share/confluent-hub-components
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:main
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+
+
+  kafka-connect-ui:
+    image: landoop/kafka-connect-ui:latest
+    container_name: kafka-connect-ui
+    depends_on:
+      - kafka-connect
+    ports:
+      - "8000:8000"
+    environment:
+      CONNECT_URL: "http://kafka-connect:8083"
 
   kafka-setup:
     image: confluentinc/cp-kafka:7.7.1
     container_name: kafka-setup
     depends_on:
-      - kafka
-      - schema-registry
+      - kafka1
+      - kafka2
+      - kafka3
     entrypoint:
       - /bin/sh
       - -c
       - |
         echo "Waiting for Kafka to be ready..."
-        cub kafka-ready -b kafka:9092 1 20
+        cub kafka-ready -b kafka1:9092 1 20
         echo "Kafka is ready! Creating topics..."
-        kafka-topics --bootstrap-server kafka:9092 --create --topic input-topic --partitions 1 --replication-factor 1
-        kafka-topics --bootstrap-server kafka:9092 --create --topic output-topic --partitions 1 --replication-factor 1
+        kafka-topics --bootstrap-server kafka1:9092,kafka2:9092,kafka3:9092 \
+          --create --topic weather-topic --partitions 12 --replication-factor 3
+        kafka-topics --bootstrap-server kafka1:9092,kafka2:9092,kafka3:9092 \
+          --create --topic output-topic --partitions 12 --replication-factor 3
         echo "Topics created!"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - ./kui/config.yml:/etc/kafkaui/dynamic_config.yaml
 
 volumes:
   kafka-data:
